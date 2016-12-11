@@ -1,5 +1,7 @@
 import javax.swing.*;
+import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -62,6 +64,7 @@ public class ClientGUI extends JFrame {
         //==settingsPanel for subscribe/unsubscribe==
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.X_AXIS));
+        settingsPanel.setBorder(new TitledBorder(new EtchedBorder(), "Settings"));
         topPanel.add(settingsPanel, BorderLayout.NORTH);
 
         Topic[] topicData = topics.stream().toArray(Topic[]::new);
@@ -118,9 +121,9 @@ public class ClientGUI extends JFrame {
         //=====Bottom half of the gui=====
 
         JScrollPane feedPanel = new JScrollPane();
-        feedPanel.setBackground(Color.green);
         feedPanel.setPreferredSize(new Dimension(1200, 800));
         feedPanel.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        feedPanel.setBorder(new TitledBorder(new EtchedBorder(), "Latest News"));
         contentPane.add(feedPanel);
 
         eventsListPanel = new JPanel();

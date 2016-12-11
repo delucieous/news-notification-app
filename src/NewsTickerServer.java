@@ -13,11 +13,17 @@ import java.util.Random;
  */
 public class NewsTickerServer {
 
-    public static void main(String[] args) {
+    private HashMap<String, NotificationSource> sources;
+    private ArrayList<Topic> registeredTopics;
+    Random rand;
 
-        HashMap<String, NotificationSource> sources = new HashMap<>();
-        ArrayList<Topic> registeredTopics = new ArrayList<>();
-        Random rand = new Random();
+    public NewsTickerServer() {
+        sources = new HashMap<>();
+        registeredTopics = new ArrayList<>();
+        rand = new Random();
+    }
+
+    public void start() {
 
         try {
             RegistryProxyInterface regProxy = (RegistryProxyInterface) Naming.lookup("regProxy");
