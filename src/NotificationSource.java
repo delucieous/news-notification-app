@@ -60,7 +60,6 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
 
     private void sendHeldMessages(NotificationSinkInterface sink) throws RemoteException {
         String sinkID = sink.getID();
-        System.out.println("empty the queue");
         LinkedBlockingQueue<Notification<? extends NotifiableEvent>> queue = heldMap.get(sinkID);
         System.out.println(queue);
         while (!queue.isEmpty()) {

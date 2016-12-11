@@ -36,7 +36,6 @@ public class NewsTickerClient {
 
             new Thread(() -> {
                 while(true) {
-                    System.out.println("take");
                     NotifiableEvent event = sink.takeNotification();
                     this.handleNotification(event);
                 }

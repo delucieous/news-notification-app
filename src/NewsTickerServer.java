@@ -32,7 +32,7 @@ public class NewsTickerServer {
             while (true) {
                 Thread.sleep(5000);
                 Topic randTopic = registeredTopics.get(rand.nextInt(registeredTopics.size()));
-                NewsEvent randEvent = new NewsEvent(randTopic, new URI("http://joshuamarron.com"), "some text here " + randTopic.getCode(), "Some Things Happened Today in " + randTopic.toString() + "!");
+                NewsEvent randEvent = new NewsEvent(randTopic, new URI("http://joshuamarron.com"), "some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here some text here " + randTopic.getCode(), "Some Things Happened Today in " + randTopic.toString() + "!");
                 Notification<NewsEvent> not = new Notification<>(randEvent);
                 sources.get(randTopic.getCode()).publishToSource(not);
                 System.out.println("sent" + not.toString());

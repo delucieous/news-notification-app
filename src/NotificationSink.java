@@ -53,7 +53,6 @@ public class NotificationSink extends UnicastRemoteObject implements Notificatio
     public boolean notifyOfEvent(Notification<? extends NotifiableEvent> notification) throws RemoteException {
         try {
             notificationQueue.put(notification.getEvent());
-            System.out.println(notificationQueue.size());
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

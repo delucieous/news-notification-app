@@ -1,8 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.net.URI;
 
 /**
@@ -10,12 +7,12 @@ import java.net.URI;
  */
 public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel> {
 
-    NewsEvent event;
-    public JPanel topPanel;
-    public Color bgColor;
-    public Color textBgColor;
-    public JTextArea articleDesc;
-    public URI link;
+    private NewsEvent event;
+    private  JPanel topPanel;
+    private Color bgColor;
+    private Color textBgColor;
+    private JTextArea articleDesc;
+    private URI link;
 
     public NewsEventPanel(NewsEvent event) {
         this.event = event;
@@ -32,21 +29,20 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
 
         topPanel = new JPanel();
         topPanel.setBackground(bgColor);
-        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.X_AXIS));
+        topPanel.setLayout(new GridLayout(2, 2));
         JLabel topicLabel = new JLabel(event.getTopic().toString());
         JLabel urlLabel = new JLabel(event.getArticleLink().toString());
         JLabel headline = new JLabel(event.getHeadline());
+        headline.setFont(headline.getFont().deriveFont(Font.BOLD));
         JLabel dateLabel = new JLabel(event.getTime().toString());
-        headline.setHorizontalAlignment(SwingConstants.CENTER);
+        dateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        urlLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
 
         topPanel.add(topicLabel);
-        topPanel.add(Box.createHorizontalGlue());
-        topPanel.add(headline);
-        topPanel.add(Box.createHorizontalGlue());
-        topPanel.add(dateLabel);
-        topPanel.add(Box.createHorizontalGlue());
         topPanel.add(urlLabel);
+        topPanel.add(headline);
+        topPanel.add(dateLabel);
 
         this.add(topPanel, BorderLayout.NORTH);
 
@@ -54,6 +50,8 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
         articleDesc.setEditable(false);
         articleDesc.setLineWrap(true);
         articleDesc.setWrapStyleWord(true);
+        articleDesc.setFont(articleDesc.getFont().deriveFont(20f));
+        articleDesc.setFont(new Font("Helvetica", articleDesc.getFont().getStyle(), articleDesc.getFont().getSize()));
 
         textBgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 15);
         articleDesc.setBackground(textBgColor);
@@ -66,7 +64,6 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
 
     private Color getBGColor(Topic topic) {
         Color bgColor = NewsTopics.colourFromTopic(topic);
-        System.out.println(bgColor);
         bgColor = bgColor == null ? Color.white : bgColor;
         return new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 70);
     }
@@ -81,4 +78,30 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
         }
         else {return 0;}
     }
+
+
+    public NewsEvent getEvent() {
+        return event;
+    }
+
+    public JPanel getTopPanel() {
+        return topPanel;
+    }
+
+    public Color getBgColor() {
+        return bgColor;
+    }
+
+    public Color getTextBgColor() {
+        return textBgColor;
+    }
+
+    public JTextArea getArticleDesc() {
+        return articleDesc;
+    }
+
+    public URI getLink() {
+        return link;
+    }
+
 }

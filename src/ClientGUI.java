@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.TreeSet;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,7 +61,7 @@ public class ClientGUI extends JFrame {
 
         //==settingsPanel for subscribe/unsubscribe==
         JPanel settingsPanel = new JPanel();
-        settingsPanel.setLayout(new FlowLayout());
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.X_AXIS));
         topPanel.add(settingsPanel, BorderLayout.NORTH);
 
         Topic[] topicData = topics.stream().toArray(Topic[]::new);
@@ -72,9 +71,13 @@ public class ClientGUI extends JFrame {
 
         JButton subscribeButton = new JButton("Subscribe");
         JButton unsubscribeButton = new JButton("Unsubscribe");
+        JButton refreshButton = new JButton("Refresh Ticker");
 
-        settingsPanel.add(subscribeButton);
         settingsPanel.add(topicSelect);
+        settingsPanel.add(subscribeButton);
+        settingsPanel.add(Box.createHorizontalGlue());
+        settingsPanel.add(refreshButton);
+        settingsPanel.add(Box.createHorizontalGlue());
         settingsPanel.add(unsubSelect);
         settingsPanel.add(unsubscribeButton);
 
@@ -110,6 +113,8 @@ public class ClientGUI extends JFrame {
             }
         }));
 
+        refreshButton.addActionListener((e) -> tickerPanel.launchLoop());
+
         //=====Bottom half of the gui=====
 
         JScrollPane feedPanel = new JScrollPane();
@@ -124,13 +129,13 @@ public class ClientGUI extends JFrame {
 
         this.setVisible(true);
         tickerPanel.launchLoop();
-        tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 1, TimeUnit.MINUTES);
+        tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 60, TimeUnit.SECONDS);
     }
 
     public void displayNewsEvent(NewsEvent event) {
         NewsEventPanel panel = new NewsEventPanel(event);
         panel.addMouseListener(new NewsEventPanelListener(panel));
-        panel.articleDesc.addMouseListener(new NewsEventPanelListener(panel)); //So child triggers too
+        panel.getArticleDesc().addMouseListener(new NewsEventPanelListener(panel)); //So child triggers too
         newsPanels.add(panel);
 
         eventsListPanel.removeAll();
@@ -162,7 +167,7 @@ public class ClientGUI extends JFrame {
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
-                Desktop.getDesktop().browse(panel.link);
+                Desktop.getDesktop().browse(panel.getLink());
             } catch (IOException e1) {
                 JOptionPane.showMessageDialog(ClientGUI.this, e1.getMessage(), "Could not open link", JOptionPane.ERROR_MESSAGE);
             }
@@ -171,24 +176,24 @@ public class ClientGUI extends JFrame {
         @Override
         public void mouseEntered(MouseEvent e) {
 
-            float[] tempColorHSB = Color.RGBtoHSB(panel.bgColor.getRed(), panel.bgColor.getGreen(), panel.bgColor.getBlue(), null);
+            float[] tempColorHSB = Color.RGBtoHSB(panel.getBgColor().getRed(), panel.getBgColor().getGreen(), panel.getBgColor().getBlue(), null);
             Color tempColor = Color.getHSBColor(tempColorHSB[0], tempColorHSB[1], tempColorHSB[2] + 0.2f);
             tempColor = new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), 0);
 
-            float[] tempTextColorHSB = Color.RGBtoHSB(panel.textBgColor.getRed(), panel.textBgColor.getGreen(), panel.textBgColor.getBlue(), null);
+            float[] tempTextColorHSB = Color.RGBtoHSB(panel.getBgColor().getRed(), panel.getBgColor().getGreen(), panel.getBgColor().getBlue(), null);
             Color tempTextColor = Color.getHSBColor(tempTextColorHSB[0], tempTextColorHSB[1], tempTextColorHSB[2] + 0.5f);
             tempTextColor = new Color(tempTextColor.getRed(), tempTextColor.getGreen(), tempTextColor.getBlue(), 0);
 
-            panel.topPanel.setBackground(tempColor);
-            panel.articleDesc.setBackground(tempTextColor);
+            panel.getTopPanel().setBackground(tempColor);
+            panel.getArticleDesc().setBackground(tempTextColor);
 
             repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-            panel.topPanel.setBackground(panel.bgColor);
-            panel.articleDesc.setBackground(panel.textBgColor);
+            panel.getTopPanel().setBackground(panel.getBgColor());
+            panel.getArticleDesc().setBackground(panel.getTextBgColor());
 
             repaint();
         }
