@@ -1,8 +1,14 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by marro on 10/12/2016.
@@ -11,10 +17,15 @@ public class ClientGUI extends JFrame {
 
     private ArrayList<Topic> topics;
     private NewsTickerClient client;
+    private ArrayList<NewsEventPanel> newsPanels;
+    private JPanel eventsListPanel;
+    private TickerPanel tickerPanel;
+    private ScheduledExecutorService tickerRefresh = Executors.newScheduledThreadPool(1);
 
     public ClientGUI(NewsTickerClient client, ArrayList<Topic> topics) {
         this.topics = topics;
         this.client = client;
+        newsPanels = new ArrayList<>();
     }
 
     public void initialise() {
@@ -45,7 +56,7 @@ public class ClientGUI extends JFrame {
         JButton unsubscribeButton = new JButton("Unsubscribe");
         settingsPanel.add(unsubscribeButton);
 
-        TickerPanel tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
+        tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
         topPanel.add(tickerPanel, BorderLayout.CENTER);
 
         subscribeButton.addActionListener((e) -> tickerPanel.launchLoop());
@@ -56,24 +67,83 @@ public class ClientGUI extends JFrame {
         JScrollPane feedPanel = new JScrollPane();
         feedPanel.setBackground(Color.green);
         feedPanel.setPreferredSize(new Dimension(1200, 800));
+        feedPanel.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         contentPane.add(feedPanel);
 
-        JPanel panelToScroll = new JPanel();
-        panelToScroll.setLayout(new BoxLayout(panelToScroll, BoxLayout.Y_AXIS));
-        feedPanel.setViewportView(panelToScroll);
-
-
-        for (Topic topic: topics) {
-            JPanel p = new JPanel();
-            JLabel lab = new JLabel(topic.getCode());
-            p.add(lab, BorderLayout.CENTER);
-            p.setPreferredSize(new Dimension(1100, 200));
-            p.setBorder(new LineBorder(Color.BLACK, 5));
-            panelToScroll.add(p);
-            panelToScroll.add(Box.createRigidArea(new Dimension(0, 5)));
-        }
+        eventsListPanel = new JPanel();
+        eventsListPanel.setLayout(new BoxLayout(eventsListPanel, BoxLayout.Y_AXIS));
+        feedPanel.setViewportView(eventsListPanel);
 
         this.setVisible(true);
         tickerPanel.launchLoop();
+        tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 1, TimeUnit.MINUTES);
+    }
+
+    public void displayNewsEvent(NewsEvent event) {
+        NewsEventPanel panel = new NewsEventPanel(event);
+        panel.addMouseListener(new NewsEventPanelListener(panel));
+        panel.articleDesc.addMouseListener(new NewsEventPanelListener(panel)); //So child triggers too
+        newsPanels.add(panel);
+
+        eventsListPanel.removeAll();
+        for (int i = newsPanels.size() - 1; i >= 0; i--) {
+            addToEventsListPanel(newsPanels.get(i));
+        }
+
+        tickerPanel.addNotificationString(event.getHeadline());
+
+
+        revalidate();
+        repaint();
+    }
+
+    private void addToEventsListPanel(NewsEventPanel ePanel) {
+        ePanel.setPreferredSize(new Dimension(1100, 200));
+        ePanel.setBorder(new LineBorder(Color.BLACK, 5));
+        eventsListPanel.add(ePanel);
+        eventsListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+    }
+
+    private class NewsEventPanelListener extends MouseAdapter {
+
+        private NewsEventPanel panel;
+
+        public NewsEventPanelListener(NewsEventPanel panel) {
+            this.panel = panel;
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            try {
+                Desktop.getDesktop().browse(panel.link);
+            } catch (IOException e1) {
+                JOptionPane.showMessageDialog(ClientGUI.this, e1.getMessage(), "Could not open link", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+            float[] tempColorHSB = Color.RGBtoHSB(panel.bgColor.getRed(), panel.bgColor.getGreen(), panel.bgColor.getBlue(), null);
+            Color tempColor = Color.getHSBColor(tempColorHSB[0], tempColorHSB[1], tempColorHSB[2] + 0.2f);
+            tempColor = new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), 0);
+
+            float[] tempTextColorHSB = Color.RGBtoHSB(panel.textBgColor.getRed(), panel.textBgColor.getGreen(), panel.textBgColor.getBlue(), null);
+            Color tempTextColor = Color.getHSBColor(tempTextColorHSB[0], tempTextColorHSB[1], tempTextColorHSB[2] + 0.5f);
+            tempTextColor = new Color(tempTextColor.getRed(), tempTextColor.getGreen(), tempTextColor.getBlue(), 0);
+
+            panel.topPanel.setBackground(tempColor);
+            panel.articleDesc.setBackground(tempTextColor);
+
+            repaint();
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            panel.topPanel.setBackground(panel.bgColor);
+            panel.articleDesc.setBackground(panel.textBgColor);
+
+            repaint();
+        }
     }
 }

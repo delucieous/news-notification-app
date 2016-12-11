@@ -41,10 +41,11 @@ public class TickerPanel extends JPanel implements ActionListener{
      */
     public String createLoopingString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("---");
         for (String string: strings) {
             sb.append("  |||  ").append(string);
         }
-        sb.append("  |||  ");
+        sb.append("  |||  ").append("---");
         return sb.toString();
     }
 
