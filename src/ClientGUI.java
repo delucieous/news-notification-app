@@ -4,8 +4,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,19 +18,34 @@ import java.util.concurrent.TimeUnit;
 public class ClientGUI extends JFrame {
 
     private ArrayList<Topic> topics;
+    private ArrayList<Topic> subbedTopics;
     private NewsTickerClient client;
     private ArrayList<NewsEventPanel> newsPanels;
     private JPanel eventsListPanel;
     private TickerPanel tickerPanel;
     private ScheduledExecutorService tickerRefresh = Executors.newScheduledThreadPool(1);
+    private ExecutorService helperThreads = Executors.newFixedThreadPool(4);
 
-    public ClientGUI(NewsTickerClient client, ArrayList<Topic> topics) {
+    public ClientGUI(NewsTickerClient client, ArrayList<Topic> topics, ArrayList<Topic> subbedTopics) {
         this.topics = topics;
+        this.subbedTopics = subbedTopics;
         this.client = client;
         newsPanels = new ArrayList<>();
     }
 
     public void initialise() {
+
+        try {
+            for (UIManager.LookAndFeelInfo info: UIManager.getInstalledLookAndFeels()) {
+                if (info.getName().equals("Windows")) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        // ==Set up window==
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setSize(1200, 1300);
         this.setLocationRelativeTo(null);
@@ -37,32 +54,53 @@ public class ClientGUI extends JFrame {
         this.setContentPane(contentPane);
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
 
+        //==topPanel contains the ticker and settings==
         JPanel topPanel = new JPanel();
         topPanel.setBackground(Color.cyan);
         topPanel.setLayout(new BorderLayout());
 
+        //==settingsPanel for subscribe/unsubscribe==
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new FlowLayout());
         topPanel.add(settingsPanel, BorderLayout.NORTH);
 
         Topic[] topicData = topics.stream().toArray(Topic[]::new);
+        Topic[] subbedTopicsData = subbedTopics.stream().toArray(Topic[]::new);
         JComboBox<Topic> topicSelect = new JComboBox<>(topicData);
-        settingsPanel.add(topicSelect);
+        JComboBox<Topic> unsubSelect = new JComboBox<>(subbedTopicsData);
 
         JButton subscribeButton = new JButton("Subscribe");
-        settingsPanel.add(subscribeButton);
-        contentPane.add(topPanel);
-
         JButton unsubscribeButton = new JButton("Unsubscribe");
+
+        settingsPanel.add(subscribeButton);
+        settingsPanel.add(topicSelect);
+        settingsPanel.add(unsubSelect);
         settingsPanel.add(unsubscribeButton);
 
+        contentPane.add(topPanel);
+
+        //==Add the ticker panel==
         tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
         topPanel.add(tickerPanel, BorderLayout.CENTER);
 
-        subscribeButton.addActionListener((e) -> tickerPanel.launchLoop());
+        subscribeButton.addActionListener((e) -> {
+            helperThreads.submit(() -> {
+                try {
+                    Topic selected = (Topic) topicSelect.getSelectedItem();
+                    client.subscribeToTopic(selected);
+                    SwingUtilities.invokeLater(() -> {
+                        topicSelect.removeItemAt(topicSelect.getSelectedIndex());
+                        unsubSelect.addItem(selected);
+                    });
+                } catch (ConnectException e1) {
+                    JOptionPane.showMessageDialog(this, "Could not connect to source for the desired topic, please try again later", "Connection Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+        });
+
         unsubscribeButton.addActionListener((e) -> tickerPanel.addNotificationString(UUID.randomUUID().toString()));
 
-        //Feed panel
+        //=====Bottom half of the gui=====
 
         JScrollPane feedPanel = new JScrollPane();
         feedPanel.setBackground(Color.green);
@@ -91,7 +129,6 @@ public class ClientGUI extends JFrame {
         }
 
         tickerPanel.addNotificationString(event.getHeadline());
-
 
         revalidate();
         repaint();

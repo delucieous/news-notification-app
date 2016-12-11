@@ -19,4 +19,8 @@ public class Topic implements Serializable {
     public String toString() {
         return (Character.toUpperCase(code.charAt(0)) + code.substring(1).replace('-', ' '));
     }
+
+    public boolean equalsTopic(Topic t) {
+        return t.getCode().equals(this.getCode());
+    }
 }
