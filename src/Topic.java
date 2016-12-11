@@ -20,7 +20,18 @@ public class Topic implements Serializable {
         return (Character.toUpperCase(code.charAt(0)) + code.substring(1).replace('-', ' '));
     }
 
-    public boolean equalsTopic(Topic t) {
-        return t.getCode().equals(this.getCode());
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Topic)) {
+            return false;
+        }
+        else {
+            return ((Topic) o).getCode().equals(this.getCode());
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        return code.hashCode();
     }
 }

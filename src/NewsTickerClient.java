@@ -53,6 +53,11 @@ public class NewsTickerClient {
         saveSub(topic);
     }
 
+    public void unsubscribeFromTopic(Topic topic) throws ConnectException {
+        sink.unsubscribe(topic);
+        removeSub(topic);
+    }
+
     public void handleNotification(NotifiableEvent event) {
         if (event instanceof NewsEvent) {
             NewsEvent newsEvent = (NewsEvent) event;

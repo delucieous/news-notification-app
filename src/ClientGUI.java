@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,7 +21,7 @@ public class ClientGUI extends JFrame {
     private ArrayList<Topic> topics;
     private ArrayList<Topic> subbedTopics;
     private NewsTickerClient client;
-    private ArrayList<NewsEventPanel> newsPanels;
+    private TreeSet<NewsEventPanel> newsPanels;
     private JPanel eventsListPanel;
     private TickerPanel tickerPanel;
     private ScheduledExecutorService tickerRefresh = Executors.newScheduledThreadPool(1);
@@ -30,7 +31,7 @@ public class ClientGUI extends JFrame {
         this.topics = topics;
         this.subbedTopics = subbedTopics;
         this.client = client;
-        newsPanels = new ArrayList<>();
+        newsPanels = new TreeSet<>();
     }
 
     public void initialise() {
@@ -83,8 +84,7 @@ public class ClientGUI extends JFrame {
         tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
         topPanel.add(tickerPanel, BorderLayout.CENTER);
 
-        subscribeButton.addActionListener((e) -> {
-            helperThreads.submit(() -> {
+        subscribeButton.addActionListener((e) -> helperThreads.submit(() -> {
                 try {
                     Topic selected = (Topic) topicSelect.getSelectedItem();
                     client.subscribeToTopic(selected);
@@ -95,10 +95,20 @@ public class ClientGUI extends JFrame {
                 } catch (ConnectException e1) {
                     JOptionPane.showMessageDialog(this, "Could not connect to source for the desired topic, please try again later", "Connection Error", JOptionPane.ERROR_MESSAGE);
                 }
-            });
-        });
+            }));
 
-        unsubscribeButton.addActionListener((e) -> tickerPanel.addNotificationString(UUID.randomUUID().toString()));
+        unsubscribeButton.addActionListener((e) -> helperThreads.submit(() -> {
+            try {
+                Topic selected = (Topic) unsubSelect.getSelectedItem();
+                client.unsubscribeFromTopic(selected);
+                SwingUtilities.invokeLater(() -> {
+                    unsubSelect.removeItemAt(unsubSelect.getSelectedIndex());
+                    topicSelect.addItem(selected);
+                });
+            } catch (ConnectException ce) {
+                JOptionPane.showMessageDialog(this, "Could not connect to source for the desired topic, please try again later", "Connection Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }));
 
         //=====Bottom half of the gui=====
 
@@ -124,8 +134,8 @@ public class ClientGUI extends JFrame {
         newsPanels.add(panel);
 
         eventsListPanel.removeAll();
-        for (int i = newsPanels.size() - 1; i >= 0; i--) {
-            addToEventsListPanel(newsPanels.get(i));
+        for (NewsEventPanel p: newsPanels) {
+            addToEventsListPanel(p);
         }
 
         tickerPanel.addNotificationString(event.getHeadline());

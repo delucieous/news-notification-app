@@ -8,7 +8,7 @@ import java.net.URI;
 /**
  * Created by marro on 11/12/2016.
  */
-public class NewsEventPanel extends JPanel {
+public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel> {
 
     NewsEvent event;
     public JPanel topPanel;
@@ -36,12 +36,15 @@ public class NewsEventPanel extends JPanel {
         JLabel topicLabel = new JLabel(event.getTopic().toString());
         JLabel urlLabel = new JLabel(event.getArticleLink().toString());
         JLabel headline = new JLabel(event.getHeadline());
+        JLabel dateLabel = new JLabel(event.getTime().toString());
         headline.setHorizontalAlignment(SwingConstants.CENTER);
 
 
         topPanel.add(topicLabel);
         topPanel.add(Box.createHorizontalGlue());
         topPanel.add(headline);
+        topPanel.add(Box.createHorizontalGlue());
+        topPanel.add(dateLabel);
         topPanel.add(Box.createHorizontalGlue());
         topPanel.add(urlLabel);
 
@@ -68,4 +71,14 @@ public class NewsEventPanel extends JPanel {
         return new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 70);
     }
 
+    @Override
+    public int compareTo(NewsEventPanel o) {
+        if (this.event.getTime().after(o.event.getTime())) {
+            return -2;
+        }
+        else if (this.event.getTime().before(o.event.getTime())) {
+            return 2;
+        }
+        else {return 0;}
+    }
 }

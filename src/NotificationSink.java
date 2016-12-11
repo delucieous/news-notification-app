@@ -85,6 +85,7 @@ public class NotificationSink extends UnicastRemoteObject implements Notificatio
             try {
                 NotificationSourceInterface source = (NotificationSourceInterface) Naming.lookup(NotificationFramework.hostname + topic.getCode());
                 source.unregister(this.id);
+                return;
             } catch (NotBoundException e) {
                 throw new ConnectException("This topic does not exist or has been taken down.");
             } catch (MalformedURLException e) {
