@@ -27,6 +27,7 @@ public class ClientGUI extends JFrame {
     private TickerPanel tickerPanel;
     private ScheduledExecutorService tickerRefresh = Executors.newScheduledThreadPool(1);
     private ExecutorService helperThreads = Executors.newFixedThreadPool(4);
+    private JComboBox<Topic> topicSelect;
 
     public ClientGUI(NewsTickerClient client, ArrayList<Topic> topics, ArrayList<Topic> subbedTopics) {
         this.topics = topics;
@@ -69,17 +70,19 @@ public class ClientGUI extends JFrame {
 
         Topic[] topicData = topics.stream().toArray(Topic[]::new);
         Topic[] subbedTopicsData = subbedTopics.stream().toArray(Topic[]::new);
-        JComboBox<Topic> topicSelect = new JComboBox<>(topicData);
+        topicSelect = new JComboBox<>(topicData);
         JComboBox<Topic> unsubSelect = new JComboBox<>(subbedTopicsData);
 
         JButton subscribeButton = new JButton("Subscribe");
         JButton unsubscribeButton = new JButton("Unsubscribe");
-        JButton refreshButton = new JButton("Refresh Ticker");
+        JButton refreshTickerButton = new JButton("Refresh Ticker");
+        JButton refreshTopicsButton = new JButton("Refresh Topics");
 
+        settingsPanel.add(refreshTopicsButton);
         settingsPanel.add(topicSelect);
         settingsPanel.add(subscribeButton);
         settingsPanel.add(Box.createHorizontalGlue());
-        settingsPanel.add(refreshButton);
+        settingsPanel.add(refreshTickerButton);
         settingsPanel.add(Box.createHorizontalGlue());
         settingsPanel.add(unsubSelect);
         settingsPanel.add(unsubscribeButton);
@@ -89,6 +92,10 @@ public class ClientGUI extends JFrame {
         //==Add the ticker panel==
         tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
         topPanel.add(tickerPanel, BorderLayout.CENTER);
+
+        refreshTopicsButton.addActionListener((e) -> helperThreads.submit(() -> {
+            client.refreshTopics();
+        }));
 
         subscribeButton.addActionListener((e) -> helperThreads.submit(() -> {
                 try {
@@ -116,7 +123,7 @@ public class ClientGUI extends JFrame {
             }
         }));
 
-        refreshButton.addActionListener((e) -> tickerPanel.launchLoop());
+        refreshTickerButton.addActionListener((e) -> tickerPanel.launchLoop());
 
         //=====Bottom half of the gui=====
 
@@ -132,7 +139,7 @@ public class ClientGUI extends JFrame {
 
         this.setVisible(true);
         tickerPanel.launchLoop();
-        tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 60, TimeUnit.SECONDS);
+        tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 90, TimeUnit.SECONDS);
     }
 
     public void displayNewsEvent(NewsEvent event) {
@@ -157,6 +164,14 @@ public class ClientGUI extends JFrame {
         ePanel.setBorder(new LineBorder(Color.BLACK, 5));
         eventsListPanel.add(ePanel);
         eventsListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+    }
+
+    public void displayNewTopics(ArrayList<Topic> newTopics) {
+        Topic[] topicData = newTopics.stream().toArray(Topic[]::new);
+        DefaultComboBoxModel<Topic> model = new DefaultComboBoxModel<>(topicData);
+        topicSelect.setModel(model);
+
+        repaint();
     }
 
     private class NewsEventPanelListener extends MouseAdapter {

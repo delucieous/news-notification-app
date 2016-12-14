@@ -57,6 +57,18 @@ public class NewsTickerClient {
         removeSub(topic);
     }
 
+    public void refreshTopics() {
+        try {
+            ArrayList<Topic> newTopics = NotificationFramework.getSources();
+            ArrayList<Topic> subbedTopics = this.getSavedSubs();
+            ArrayList<Topic> newTopicsFiltered = newTopics.stream().filter(topic -> !subbedTopics.contains(topic)).collect(Collectors.toCollection(ArrayList::new));
+            SwingUtilities.invokeLater(() -> gui.displayNewTopics(newTopicsFiltered));
+
+        } catch (ConnectException e) {
+            JOptionPane.showMessageDialog(gui, "Could not connect to the registry.", "Connection Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     public void handleNotification(NotifiableEvent event) {
         if (event instanceof NewsEvent) {
             NewsEvent newsEvent = (NewsEvent) event;
