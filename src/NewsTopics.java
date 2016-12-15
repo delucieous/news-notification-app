@@ -1,7 +1,7 @@
 import java.awt.*;
 
-/**
- * Created by marro on 11/12/2016.
+/*
+This enum covers all the possible topics for the NewsApi.org API, so we cannot query invalid topics
  */
 public enum NewsTopics {
 
@@ -31,6 +31,7 @@ public enum NewsTopics {
         return this.colour;
     }
 
+    //Gets the colour associated to a topic or returns null if the topic does not exist
     public static Color colourFromTopic(Topic topic) {
         for (NewsTopics nt: values()) {
             if (nt.getTopic().getCode().equals(topic.getCode())) {

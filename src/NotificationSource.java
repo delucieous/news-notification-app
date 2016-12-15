@@ -6,18 +6,23 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
 import java.util.concurrent.*;
 
-/**
- * Created by marro on 06/12/2016.
+/*
+This class is the source section of the Notification Framework, able to send notifications to sink objects
  */
 public class NotificationSource extends UnicastRemoteObject implements NotificationSourceInterface {
 
+    //An executor service used to manage reconnections without interfering with sending
     private ExecutorService connectionHandler;
+    //A scheduled executor which empties a sink's queue every 30 minutes
     private ScheduledExecutorService pruneRegister;
 
+    //Contains the sinks which are currently available to receive notifications
     private ConcurrentHashMap<String, NotificationSinkInterface> sinkMap;
+    //This map allows us to store notifications for a sink once it has disconnected
     private ConcurrentHashMap<String, LinkedBlockingQueue<Notification<? extends NotifiableEvent>>> heldMap;
     private Topic topic;
     private String id;
+    //Allows the source to interface with the registry from another machine
     private RegistryProxyInterface regProxy;
 
     public NotificationSource(Topic topic, RegistryProxyInterface regProxy) throws RemoteException {
@@ -32,6 +37,8 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
         launchPruningTask();
     }
 
+    //If a sink has disappeared from the register then it is taken out of the available map
+    //This is done every 2 minutes to allow for less attempted connections
     private void launchPruningTask() {
         pruneRegister.scheduleAtFixedRate(() -> {
             for (String id: sinkMap.keySet()) {
@@ -48,6 +55,8 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
         }, 3, 2, TimeUnit.MINUTES);
     }
 
+    //Registers the given sink to this source
+    //If the sink is found in the holding map then we send it the notifications that were queued up
     @Override
     public void register(NotificationSinkInterface sink) throws RemoteException {
         String sinkID = sink.getID();
@@ -55,53 +64,54 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
             sendHeldMessages(sink);
         }
         sinkMap.put(sinkID, sink);
-        regProxy.proxyBind(sinkID, sink);
+        regProxy.proxyBind(sinkID, sink); //Bind the sink to the registry via the proxy
     }
 
+    //This method sends all the held notifications to the given sink
     private void sendHeldMessages(NotificationSinkInterface sink) throws RemoteException {
         String sinkID = sink.getID();
+        //Get the queue
         LinkedBlockingQueue<Notification<? extends NotifiableEvent>> queue = heldMap.get(sinkID);
-        System.out.println(queue);
-        while (!queue.isEmpty()) {
+        while (!queue.isEmpty()) { //Remove notifications until the queue is empty
             Notification<? extends NotifiableEvent> notification = queue.remove();
             try {
                 sink.notifyOfEvent(notification);
             }
             catch (ConnectException ce) {
+                //If we lose connection, go back through the connection loss cycle and stop trying to send
                 handleConnectionLoss(sink, sinkID, notification);
                 return;
             }
         }
     }
 
+    //Unregister the sink with the given ID from this source
     @Override
     public void unregister(String id) {
         if (sinkMap.containsKey(id)) {
             sinkMap.remove(id);
+            heldMap.put(id, new LinkedBlockingQueue<>()); //Start holding notifications after unregistering
         }
-        try {
-            regProxy.proxyUnbind(id);
-        } catch (Exception e) {
-            System.out.println("Already unregistered");
-        }
-        pruneRegister.schedule(() -> {      //After a 30 minute grace period we wipe the stored notifications
+        pruneRegister.scheduleAtFixedRate(() -> {      //After a 30 minute grace period we restart the stored notifications
             heldMap.remove(id);
-        }, 30, TimeUnit.MINUTES);
+            heldMap.put(id, new LinkedBlockingQueue<>());
+        }, 30, 30, TimeUnit.MINUTES);
         System.out.println("unregistered" + id);
     }
 
-    @Override
-    public void publishToSource(Notification<? extends NotifiableEvent> notification) throws RemoteException {
+    //Send the given notification to all the registered sources or put it in their holding queue
+    public void publishToSource(Notification<? extends NotifiableEvent> notification)  {
         for (Map.Entry<String, NotificationSinkInterface> entry: sinkMap.entrySet()) {
             try {
-                entry.getValue().notifyOfEvent(notification);
+                entry.getValue().notifyOfEvent(notification); //Try to send
             }
-            catch(ConnectException ce) {
-                heldMap.put(entry.getKey(), new LinkedBlockingQueue<>()); //put in holding map for reconnection -> need to add messages to queue
-                sinkMap.remove(entry.getKey()); //Remove so we do not try to send notifications
+            catch(RemoteException re) {
+                heldMap.put(entry.getKey(), new LinkedBlockingQueue<>()); //put in holding map for reconnection
+                sinkMap.remove(entry.getKey()); //Remove so we do not try to send notifications to dead sink
                 handleConnectionLoss(entry.getValue(), entry.getKey(), notification);
             }
         }
+        //Add the notification to the queue of all the sinks in the holding group
         for (Map.Entry<String, LinkedBlockingQueue<Notification<? extends NotifiableEvent>>> entry: heldMap.entrySet() ) {
             try {
                 entry.getValue().put(notification);
@@ -113,12 +123,13 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
         }
     }
 
+    //Allows remote access to the source's topic
     @Override
     public Topic getTopic() {
         return this.topic;
     }
 
-    //Try reconnecting 5 times and then give up - when giving up unregister the sink.
+    //Try reconnecting 3 times and then give up - when giving up unregister the sink.
     private boolean handleConnectionLoss(NotificationSinkInterface sink, String id, Notification<? extends NotifiableEvent> notification) {
         connectionHandler.execute(() -> {
             int attempts = 1;
@@ -127,7 +138,7 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
                     System.out.println("Polling after " + (attempts * 5000));
                     Thread.sleep(5000 * attempts);
                     if (sinkMap.containsKey(id)) { //This would signify a reregistration
-                        System.out.println("reconnected");
+                        System.out.println(id + " reconnected");
                         heldMap.remove(id);
                         return;
                     }
@@ -136,7 +147,7 @@ public class NotificationSource extends UnicastRemoteObject implements Notificat
 
                     heldMap.remove(id);
                     sinkMap.put(id, sink); //Put it back into the sinkMap and proceed as before
-                    System.out.println("reconnected");
+                    System.out.println(id+ " reconnected");
                     return;
                 }
                 catch(RemoteException ce) {

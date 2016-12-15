@@ -1,8 +1,8 @@
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * Created by marro on 06/12/2016.
+/*
+A simple interface which defines the shape of an event that can be passed from source to sink through a notification
  */
 public interface NotifiableEvent extends Serializable {
 

@@ -1,5 +1,5 @@
-/**
- * Created by marro on 11/12/2016.
+/*
+A simple entry point for the server application
  */
 public class NewsTickerServerStarter {
 

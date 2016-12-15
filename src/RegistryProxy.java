@@ -4,8 +4,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
-/**
- * Created by marro on 09/12/2016.
+/*
+This remote object allows any machine to bind objects to the RMI Registry, even if they are not local to it
  */
 public class RegistryProxy extends UnicastRemoteObject implements RegistryProxyInterface {
 
@@ -16,11 +16,13 @@ public class RegistryProxy extends UnicastRemoteObject implements RegistryProxyI
         this.reg = registry;
     }
 
+    //Bind the given object to the registry with the given ID
     @Override
     public void proxyBind(String id, Remote obj) throws RemoteException {
         reg.rebind(id, obj);
     }
 
+    //Unbind the object with the given ID from the registry
     @Override
     public void proxyUnbind(String id) throws RemoteException, NotBoundException {
         reg.unbind(id);

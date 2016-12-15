@@ -2,16 +2,16 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-/**
- * Created by marro on 09/12/2016.
+/*
+This class is responsible for starting the registry and providing access to it via the RegistryProxy remote object
  */
 public class RegistryManager {
 
-    static Registry reg;
+    private static Registry reg;
 
     public static void main(String[] args) {
         try {
-            reg = LocateRegistry.createRegistry(1099);
+            reg = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
             RegistryProxy proxy = new RegistryProxy(reg);
             reg.rebind("regProxy", proxy);
         } catch (RemoteException e) {

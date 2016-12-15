@@ -1,19 +1,17 @@
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Created by marro on 12/12/2016.
+/*
+This class defines the GUI of the Server application
  */
 public class ServerGUI extends JFrame {
 
     private NewsTickerServer server;
     private ArrayList<Topic> topics;
-    private ExecutorService workerThreadPoll;
+    private ExecutorService workerThreadPool;
     private JPanel newsEventShowerPanel;
     private JComboBox<Topic> topicsToAdvertise;
     private JComboBox<Topic> topicsToNotify;
@@ -22,7 +20,7 @@ public class ServerGUI extends JFrame {
     public ServerGUI(NewsTickerServer server, ArrayList<Topic> topics) {
         this.server = server;
         this.topics = topics;
-        workerThreadPoll = Executors.newFixedThreadPool(4);
+        workerThreadPool = Executors.newFixedThreadPool(4);
     }
 
     public void initialise() {
@@ -37,6 +35,7 @@ public class ServerGUI extends JFrame {
             e.printStackTrace();
         }
 
+        //Set the main frame up
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setSize(new Dimension(1200, 600));
         this.setLocationRelativeTo(null);
@@ -61,8 +60,9 @@ public class ServerGUI extends JFrame {
         topPanel.add(topicsToNotify);
         topPanel.add(fetchButton);
 
-        advertiseButton.addActionListener((e) -> workerThreadPoll.submit(() -> server.advertiseSource((Topic) topicsToAdvertise.getSelectedItem())));
-        fetchButton.addActionListener((e) -> workerThreadPoll.submit(() -> server.getStoryFromTopic((Topic) topicsToNotify.getSelectedItem())));
+        //Listeners to allow the user to advertise the chosen topic and fetch a news story for the selected topic
+        advertiseButton.addActionListener((e) -> workerThreadPool.submit(() -> server.advertiseSource((Topic) topicsToAdvertise.getSelectedItem())));
+        fetchButton.addActionListener((e) -> workerThreadPool.submit(() -> server.getStoryFromTopic((Topic) topicsToNotify.getSelectedItem())));
 
 
         JPanel storyPanel = new JPanel();
@@ -72,17 +72,11 @@ public class ServerGUI extends JFrame {
         newsEventShowerPanel = new JPanel();
         newsEventShowerPanel.setLayout(new BorderLayout());
 
-        try {
-            NewsEventPanel nPanel = new NewsEventPanel(new NewsEvent(new Topic("business"), new URI("http://joshuamarron.com"), "some preview lol lol", "Extra Extra William Henry Greedy is a tit"));
-            newsEventShowerPanel.add(nPanel);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-
         storyPanel.add(newsEventShowerPanel, BorderLayout.CENTER);
 
         notifyButton = new JButton("Notify");
         notifyButton.setEnabled(false);
+        //Listener to allow the user to publish the currently displayed event
         notifyButton.addActionListener((e) -> server.publishEvent());
 
         storyPanel.add(notifyButton, BorderLayout.SOUTH);
@@ -94,8 +88,8 @@ public class ServerGUI extends JFrame {
 
     }
 
+    //Displays the latest event on a NewsEventPanel
     public void displayLatestEvent(NewsEvent latestEvent) {
-        System.out.println("called");
         newsEventShowerPanel.removeAll();
         NewsEventPanel newPanel = new NewsEventPanel(latestEvent);
         newsEventShowerPanel.add(newPanel, BorderLayout.CENTER);
@@ -105,6 +99,7 @@ public class ServerGUI extends JFrame {
         repaint();
     }
 
+    //Removes a topic from the combobox of topics available to advertise once it has been done
     public void removeAdvertisedFromComboBox(Topic topic) {
         topicsToAdvertise.removeItem(topic);
         topicsToNotify.addItem(topic);

@@ -2,13 +2,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URI;
 
-/**
- * Created by marro on 11/12/2016.
+/*
+This class handles the presentation of a NewsEvent on the GUI
  */
 public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel> {
 
     private NewsEvent event;
-    private  JPanel topPanel;
+    private JPanel topPanel;
     private Color bgColor;
     private Color textBgColor;
     private JTextArea articleDesc;
@@ -46,6 +46,7 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
 
         this.add(topPanel, BorderLayout.NORTH);
 
+        //Text area containing the description of the article
         articleDesc = new JTextArea(event.getTextPreview());
         articleDesc.setEditable(false);
         articleDesc.setLineWrap(true);
@@ -62,12 +63,15 @@ public class NewsEventPanel extends JPanel implements Comparable<NewsEventPanel>
 
     }
 
+    //Gets the background colour from the given topic
     private Color getBGColor(Topic topic) {
         Color bgColor = NewsTopics.colourFromTopic(topic);
-        bgColor = bgColor == null ? Color.white : bgColor;
+        bgColor = bgColor == null ? Color.white : bgColor; //Previous method can return null so need to check
+        //Change the alpha value since this cannot be encoded in hex
         return new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 70);
     }
 
+    //This is used to allow the panels to be sorted in the TreeSet, guaranteeing date order
     @Override
     public int compareTo(NewsEventPanel o) {
         if (this.event.getTime().after(o.event.getTime())) {

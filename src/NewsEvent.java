@@ -1,9 +1,8 @@
-import java.awt.*;
 import java.net.URI;
 import java.util.Date;
 
-/**
- * Created by marro on 11/12/2016.
+/*
+This class models an event from the news and contains the data necessary for the client to display it
  */
 public class NewsEvent implements NotifiableEvent {
 

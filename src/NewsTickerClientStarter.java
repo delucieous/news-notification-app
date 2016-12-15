@@ -1,5 +1,5 @@
-/**
- * Created by marro on 09/12/2016.
+/*
+A simple entry point for the client application
  */
 public class NewsTickerClientStarter {
 

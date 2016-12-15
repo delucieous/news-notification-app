@@ -5,8 +5,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
-/**
- * Created by marro on 10/12/2016.
+/*
+This class manages the interaction between the GUI and the framework, providing all the controllers and logic
  */
 public class NewsTickerClient {
 
@@ -17,23 +17,30 @@ public class NewsTickerClient {
 
     public NewsTickerClient() {
         newsEvents = new ArrayList<>();
-        this.subsFile = new File("subsFile");
+        this.subsFile = new File("subsFile.dat"); //The file which current subscriptions are saved in
     }
 
+    /*
+    This method is called on application startup and initialises all the threads necessary to run the application
+     */
     public void start() {
         try {
             ArrayList<Topic> topics = NotificationFramework.getSources();
             ArrayList<Topic> subbedTopics = this.getSavedSubs();
 
+            //This one liner subtracts the subscribed topics from the available topics, giving us a list of topics
+            //which can still be subscribed to
             topics = topics.stream().filter(topic -> !subbedTopics.contains(topic)).collect(Collectors.toCollection(ArrayList::new));
             this.sink = new NotificationSink();
             this.gui = new ClientGUI(this, topics, subbedTopics);
             SwingUtilities.invokeLater(this.gui::initialise);
 
+            //Attempt to connect to the saved topics
             for (Topic topic: subbedTopics) {
                 sink.registerToSource(topic);
             }
 
+            //Start a thread which is responsible for taking notifications from the sink queue
             new Thread(() -> {
                 while(true) {
                     NotifiableEvent event = sink.takeNotification();
@@ -47,16 +54,20 @@ public class NewsTickerClient {
         }
     }
 
+    //Registers the sink to the source associated to the given topic
     public void subscribeToTopic(Topic topic) throws ConnectException {
         sink.registerToSource(topic);
         saveSub(topic);
     }
 
+    //Unregisters the sink from the source associated to the given topic
     public void unsubscribeFromTopic(Topic topic) throws ConnectException {
         sink.unsubscribe(topic);
         removeSub(topic);
     }
 
+    //This gets all the currently available sources should this have changed during the running of the application
+    //Get the full list of topics and take away the ones we were already subscribed to
     public void refreshTopics() {
         try {
             ArrayList<Topic> newTopics = NotificationFramework.getSources();
@@ -69,6 +80,7 @@ public class NewsTickerClient {
         }
     }
 
+    //Passes the incoming notification's event to the GUI to be displayed
     public void handleNotification(NotifiableEvent event) {
         if (event instanceof NewsEvent) {
             NewsEvent newsEvent = (NewsEvent) event;
@@ -77,18 +89,21 @@ public class NewsTickerClient {
         }
     }
 
+    //Saves a new subscription to the saved file
     private void saveSub(Topic topic) {
         ArrayList<Topic> currentSubs = getSavedSubs();
         currentSubs.add(topic);
         reWriteSubsFile(currentSubs);
     }
 
+    //Removes a subscription from the saved file
     private void removeSub(Topic topic) {
         ArrayList<Topic> currentSubs = getSavedSubs();
         currentSubs.remove(topic);
         reWriteSubsFile(currentSubs);
     }
 
+    //Wipe the subs file - used in the rewriting
     private void wipeSubsFile() {
         PrintWriter pw = null;
         try {
@@ -100,6 +115,7 @@ public class NewsTickerClient {
 
     }
 
+    //This function performs the work of writing the given ArrayList to the saved file after wiping it
     private void reWriteSubsFile(ArrayList<Topic> currentSubs) {
         this.wipeSubsFile();
         try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(subsFile))) {
@@ -109,6 +125,7 @@ public class NewsTickerClient {
         }
     }
 
+    //Get the client's currently saved subscriptions
     @SuppressWarnings("unchecked")
     private ArrayList<Topic> getSavedSubs() {
         ArrayList<Topic> subbedTopics = new ArrayList<>();

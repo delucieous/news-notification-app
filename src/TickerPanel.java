@@ -68,7 +68,9 @@ public class TickerPanel extends JPanel implements ActionListener{
         tickerLabel.setText(loopString);
         this.stringWidth = getStringWidth(loopString);
 
-        tickerLabel.setBounds(0, 0, this.stringWidth + 100, getHeight()); //ABSOLUTELY VITAL DO NOT REMOVE JOSH!!!!
+        //ABSOLUTELY VITAL TO SET THE LABEL'S SIZE IN ADVANCE
+        //We have to set the label manually to be bigger than the JPanel
+        tickerLabel.setBounds(0, 0, this.stringWidth + 100, getHeight());
         timer.start();
         repaint();
     }

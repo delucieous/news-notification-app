@@ -14,17 +14,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by marro on 10/12/2016.
+/*
+The class which represents the GUI of the client application
  */
 public class ClientGUI extends JFrame {
 
-    private ArrayList<Topic> topics;
-    private ArrayList<Topic> subbedTopics;
-    private NewsTickerClient client;
-    private TreeSet<NewsEventPanel> newsPanels;
+    private ArrayList<Topic> topics; //Topics which are available to subscribe to
+    private ArrayList<Topic> subbedTopics; //Topics which are already subscribed to
+    private NewsTickerClient client; //Reference to the client application
+    private TreeSet<NewsEventPanel> newsPanels; //A sorted set of panels representing the notifications
     private JPanel eventsListPanel;
     private TickerPanel tickerPanel;
+    //This first ExecutorService allows for the periodic refreshing of the ticker on the app
     private ScheduledExecutorService tickerRefresh = Executors.newScheduledThreadPool(1);
     private ExecutorService helperThreads = Executors.newFixedThreadPool(4);
     private JComboBox<Topic> topicSelect;
@@ -38,6 +39,7 @@ public class ClientGUI extends JFrame {
 
     public void initialise() {
 
+        //Try to make the program look nice
         try {
             for (UIManager.LookAndFeelInfo info: UIManager.getInstalledLookAndFeels()) {
                 if (info.getName().equals("Windows")) {
@@ -68,6 +70,7 @@ public class ClientGUI extends JFrame {
         settingsPanel.setBorder(new TitledBorder(new EtchedBorder(), "Settings"));
         topPanel.add(settingsPanel, BorderLayout.NORTH);
 
+        //Put the topic ArrayList into a fixed array for the combo boxes
         Topic[] topicData = topics.stream().toArray(Topic[]::new);
         Topic[] subbedTopicsData = subbedTopics.stream().toArray(Topic[]::new);
         topicSelect = new JComboBox<>(topicData);
@@ -93,10 +96,12 @@ public class ClientGUI extends JFrame {
         tickerPanel = new TickerPanel("Welcome to the News Ticker!", 2);
         topPanel.add(tickerPanel, BorderLayout.CENTER);
 
+        //Allows the user to refresh the available topics
         refreshTopicsButton.addActionListener((e) -> helperThreads.submit(() -> {
             client.refreshTopics();
         }));
 
+        //Allows the user to subscribe to a topic - this is done in a separate thread to avoid GUI hanging
         subscribeButton.addActionListener((e) -> helperThreads.submit(() -> {
                 try {
                     Topic selected = (Topic) topicSelect.getSelectedItem();
@@ -110,6 +115,7 @@ public class ClientGUI extends JFrame {
                 }
             }));
 
+        //Allows the user to unsubscribe from a topic
         unsubscribeButton.addActionListener((e) -> helperThreads.submit(() -> {
             try {
                 Topic selected = (Topic) unsubSelect.getSelectedItem();
@@ -123,6 +129,7 @@ public class ClientGUI extends JFrame {
             }
         }));
 
+        //Allows the user to manually refresh the ticker
         refreshTickerButton.addActionListener((e) -> tickerPanel.launchLoop());
 
         //=====Bottom half of the gui=====
@@ -142,6 +149,7 @@ public class ClientGUI extends JFrame {
         tickerRefresh.scheduleAtFixedRate(tickerPanel::launchLoop, 1, 90, TimeUnit.SECONDS);
     }
 
+    //Displays an incoming news event as a panel - the events will be sorted by date
     public void displayNewsEvent(NewsEvent event) {
         NewsEventPanel panel = new NewsEventPanel(event);
         panel.addMouseListener(new NewsEventPanelListener(panel));
@@ -153,12 +161,14 @@ public class ClientGUI extends JFrame {
             addToEventsListPanel(p);
         }
 
+        //Add the latest headline to the ticker
         tickerPanel.addNotificationString(event.getHeadline());
 
         revalidate();
         repaint();
     }
 
+    //This method handles the actual adding to the GUI for the NewsEventPanels
     private void addToEventsListPanel(NewsEventPanel ePanel) {
         ePanel.setPreferredSize(new Dimension(1100, 200));
         ePanel.setBorder(new LineBorder(Color.BLACK, 5));
@@ -166,6 +176,7 @@ public class ClientGUI extends JFrame {
         eventsListPanel.add(Box.createRigidArea(new Dimension(0, 5)));
     }
 
+    //This method allows us to change the topics advertised in the combo box
     public void displayNewTopics(ArrayList<Topic> newTopics) {
         Topic[] topicData = newTopics.stream().toArray(Topic[]::new);
         DefaultComboBoxModel<Topic> model = new DefaultComboBoxModel<>(topicData);
@@ -174,6 +185,7 @@ public class ClientGUI extends JFrame {
         repaint();
     }
 
+    //This class is a listener class for when a NewsEventPanel is hovered over or clicked on
     private class NewsEventPanelListener extends MouseAdapter {
 
         private NewsEventPanel panel;
@@ -182,6 +194,7 @@ public class ClientGUI extends JFrame {
             this.panel = panel;
         }
 
+        //On click, open the article in the browser
         @Override
         public void mouseClicked(MouseEvent e) {
             try {
@@ -191,13 +204,17 @@ public class ClientGUI extends JFrame {
             }
         }
 
+        //On hover, change the colour of the panel to make it clear it can be clicked on
         @Override
         public void mouseEntered(MouseEvent e) {
 
+            //Convert to HSB
             float[] tempColorHSB = Color.RGBtoHSB(panel.getBgColor().getRed(), panel.getBgColor().getGreen(), panel.getBgColor().getBlue(), null);
+            //Make the colour brighter
             Color tempColor = Color.getHSBColor(tempColorHSB[0], tempColorHSB[1], tempColorHSB[2] + 0.2f);
             tempColor = new Color(tempColor.getRed(), tempColor.getGreen(), tempColor.getBlue(), 0);
 
+            //Do the same for the text box
             float[] tempTextColorHSB = Color.RGBtoHSB(panel.getBgColor().getRed(), panel.getBgColor().getGreen(), panel.getBgColor().getBlue(), null);
             Color tempTextColor = Color.getHSBColor(tempTextColorHSB[0], tempTextColorHSB[1], tempTextColorHSB[2] + 0.5f);
             tempTextColor = new Color(tempTextColor.getRed(), tempTextColor.getGreen(), tempTextColor.getBlue(), 0);
@@ -208,6 +225,7 @@ public class ClientGUI extends JFrame {
             repaint();
         }
 
+        //On mouse exit, reset the colour to what it was
         @Override
         public void mouseExited(MouseEvent e) {
             panel.getTopPanel().setBackground(panel.getBgColor());

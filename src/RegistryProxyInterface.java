@@ -2,8 +2,8 @@ import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-/**
- * Created by marro on 09/12/2016.
+/*
+This interface details the remote methods of the RegistryProxy object, allowing it to serve its function
  */
 public interface RegistryProxyInterface extends Remote {
 

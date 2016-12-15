@@ -1,10 +1,10 @@
 import java.io.Serializable;
-import java.lang.reflect.Type;
 
-/**
- * Created by marro on 07/12/2016.
+/*
+Notification is the serializable part of the Notification Framework, this is the object which is sent from source to sink
+Generics are used to ensure that any object implementing NotifiableEvent can be put inside a notification
  */
-public class Notification<T extends NotifiableEvent> implements Serializable{
+public class Notification<T extends NotifiableEvent> implements Serializable {
 
     private T event;
 
