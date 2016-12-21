@@ -1,3 +1,5 @@
+package notification_framework;
+
 import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;

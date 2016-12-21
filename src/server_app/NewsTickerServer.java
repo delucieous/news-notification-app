@@ -1,7 +1,15 @@
+package server_app;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import notification_framework.Notification;
+import notification_framework.NotificationSource;
+import notification_framework.RegistryProxyInterface;
+import notification_framework.Topic;
+import shared_elements.NewsEvent;
+import shared_elements.NewsTopics;
 
 import javax.swing.*;
 import java.io.BufferedReader;

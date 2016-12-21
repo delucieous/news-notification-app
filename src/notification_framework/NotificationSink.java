@@ -1,3 +1,5 @@
+package notification_framework;
+
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;

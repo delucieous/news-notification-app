@@ -1,3 +1,5 @@
+package notification_framework;
+
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;

@@ -1,3 +1,9 @@
+package server_app;
+
+import notification_framework.Topic;
+import shared_elements.NewsEvent;
+import shared_elements.NewsEventPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;

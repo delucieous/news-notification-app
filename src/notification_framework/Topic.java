@@ -1,3 +1,5 @@
+package notification_framework;
+
 import java.io.Serializable;
 
 /*

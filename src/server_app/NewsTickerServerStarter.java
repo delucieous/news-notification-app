@@ -1,3 +1,7 @@
+package server_app;
+
+import notification_framework.NotificationFramework;
+
 /*
 A simple entry point for the server application
  */
